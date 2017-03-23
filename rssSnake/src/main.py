@@ -54,5 +54,11 @@ class Post:
     def show(self):
         print("\t" + self.title + " - from: " + self.postDate)
 
-r = Rss("https://czang.pl/blog/category/dsp2017/feed/")
-r.show()
+##jedziemy z koksem
+saved = ("http://0dev.pl/category/daj-sie-poznac-2017/feed/",
+         "https://czang.pl/blog/category/dsp2017/feed/")
+print(saved)
+for u in saved:
+    print(u + "\n")
+    r = Rss(u)
+    r.show()
