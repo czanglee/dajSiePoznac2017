@@ -6,9 +6,9 @@ _project_ = 'rssSnake'
 
 
 class Rss:
-    channel = []
 
     def __init__(self, url):
+        self.channel = []
         req = urlopen(url)
         file = req.read()
         xml = XmlTree.fromstring(file)
@@ -31,10 +31,9 @@ class Rss:
 
 
 class Channel:
-    title = None
-    posts = []
 
     def __init__(self, title):
+        self.posts = []
         self.title = title
 
     def show(self):
@@ -44,8 +43,6 @@ class Channel:
 
 
 class Post:
-    title = None
-    postDate = None
 
     def __init__(self, title, postdate):
         self.title = title
@@ -57,8 +54,6 @@ class Post:
 ##jedziemy z koksem
 saved = ("http://0dev.pl/category/daj-sie-poznac-2017/feed/",
          "https://czang.pl/blog/category/dsp2017/feed/")
-print(saved)
 for u in saved:
-    print(u + "\n")
     r = Rss(u)
     r.show()
