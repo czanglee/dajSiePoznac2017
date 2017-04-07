@@ -9,20 +9,14 @@ class Rss:
 
     def __init__(self, url):
         self.channel = []
-        req = urlopen(url)
-        file = req.read()
+        file = urlopen(url).read()
         xml = XmlTree.fromstring(file)
         self.parse(xml)
 
     def parse(self, xml):
         for channel in xml.iter("channel"):
-            c = Channel(channel.find("title").text)
-            for item in channel.iter("item"):
-                c.posts.append(
-                    Post(item.find("title").text,
-                         item.find("pubDate").text
-                         )
-                )
+            c = Channel(channel)
+            c.posts = [Post(item) for item in channel.iter("item")]
             self.channel.append(c)
 
     def show(self):
@@ -32,28 +26,39 @@ class Rss:
 
 class Channel:
 
-    def __init__(self, title):
+    def __init__(self, channel):
         self.posts = []
-        self.title = title
+        self.title = channel.find("title").text
+        self.description = channel.find("description").text
 
     def show(self):
-        print("Channel: "+self.title)
-        for p in self.posts:
-            p.show()
+        print("Channel: %s\n %s" % (self.title,self.description))
+        [p.show() for p in self.posts]
+        print("\n")
 
 
 class Post:
 
-    def __init__(self, title, postdate):
-        self.title = title
-        self.postDate = postdate
+    def __init__(self, item):
+        self.title = item.find("title").text
+        self.postDate = item.find("pubDate").text
+        nsDc = {'dc': 'http://purl.org/dc/elements/1.1/'}
+        nsContent = {"content" : "http://purl.org/rss/1.0/modules/content/"}
+        self.creator = item.find("dc:creator", nsDc).text
+        self.description = item.find("description").text
+        self.content = item.find("content:encoded", nsContent).text
 
     def show(self):
-        print("\t" + self.title + " - from: " + self.postDate)
+        print("\t[%s] - %s by: %s\n\t\t%s\n" % (
+                self.title
+                , self.postDate
+                , self.creator
+                , self.description
+                )
+              )
 
-##jedziemy z koksem
-saved = ("http://0dev.pl/category/daj-sie-poznac-2017/feed/",
-         "https://czang.pl/blog/category/dsp2017/feed/")
-for u in saved:
-    r = Rss(u)
-    r.show()
+
+channels = ("http://0dev.pl/category/daj-sie-poznac-2017/feed/"
+            , "https://czang.pl/blog/category/dsp2017/feed/")
+for u in channels:
+    Rss(u).show()
