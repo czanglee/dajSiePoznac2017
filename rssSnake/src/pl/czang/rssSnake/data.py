@@ -1,12 +1,10 @@
 from urllib.request import urlopen
 import xml.etree.ElementTree as XmlTree
-
 _author_ = 'czang'
 _project_ = 'rssSnake'
 
 
 class Rss:
-
     def __init__(self, url):
         self.channel = []
         file = urlopen(url).read()
@@ -33,7 +31,7 @@ class Channel:
 
     def show(self):
         print("Channel: %s\n %s" % (self.title,self.description))
-        [p.show() for p in self.posts]
+        [print(p) for p in self.posts]
         print("\n")
 
 
@@ -48,17 +46,19 @@ class Post:
         self.description = item.find("description").text
         self.content = item.find("content:encoded", nsContent).text
 
-    def show(self):
-        print("\t[%s] - %s by: %s\n\t\t%s\n" % (
+    def __str__(self):
+        return "\t[%s] - %s by: %s\n\t\t%s\n" % (
                 self.title
                 , self.postDate
                 , self.creator
                 , self.description
                 )
-              )
 
 
-channels = ("http://0dev.pl/category/daj-sie-poznac-2017/feed/"
-            , "https://czang.pl/blog/category/dsp2017/feed/")
-for u in channels:
-    Rss(u).show()
+if __name__ == '__main__':
+    def selftest():
+        print("-" * 80 + "\nTest pl.czang.rssSnake.data")
+        url = "https://czang.pl/blog/category/dsp2017/feed/"
+        Rss(url).show()
+        print("-" * 80 + "\nTest pl.czang.rssSnake.data finished")
+    selftest()
