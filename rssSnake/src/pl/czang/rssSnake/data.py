@@ -7,6 +7,7 @@ _project_ = 'rssSnake'
 class Rss:
     def __init__(self, url):
         self.channel = []
+        self.url = url
         file = urlopen(url).read()
         xml = XmlTree.fromstring(file)
         self.parse(xml)
