@@ -15,7 +15,7 @@ class Rss:
     def parse(self, xml):
         for channel in xml.iter("channel"):
             c = Channel(channel)
-            c.posts = [Post(item) for item in channel.iter("item")]
+            c.posts = [Post().from_xml(item) for item in channel.iter("item")]
             self.channel.append(c)
 
     def show(self):
@@ -40,8 +40,16 @@ class Channel:
 
 
 class Post:
+    def __init__(self):
+        self.title = None
+        self.link = None
+        self.postDate = None
+        self.creator = None
+        self.description = None
+        self.content = None
+        self.guid = None
 
-    def __init__(self, item):
+    def from_xml(self, item):
         self.title = item.find("title").text
         self.link = item.find("link").text
         self.postDate = item.find("pubDate").text
@@ -51,6 +59,17 @@ class Post:
         self.description = item.find("description").text
         self.content = item.find("content:encoded", nsContent).text
         self.guid = item.find("guid").text
+        return self
+
+    def from_args(self,title, link, postDate, creator, description, content, guid):
+        self.title = title
+        self.link = link
+        self.postDate = postDate
+        self.creator = creator
+        self.description = description
+        self.content = content
+        self.guid = guid
+        return self
 
     def __str__(self):
         return "\t[%s] - %s by: %s\n\t\t%s\n" % (

@@ -1,12 +1,12 @@
 import sqlite3
 import os.path
-from pl.czang.rssSnake.data import Rss
-from pl.czang.rssSnake.data import Group
+from rss import Rss,Group,Post
 
 class Persistence:
 
-    def __init__(self,fileName):
+    def __init__(self, fileName):
         self.con = sqlite3.connect(fileName)
+        self.fileName = fileName
         c = self.con.cursor()
         c.execute("PRAGMA foreign_keys = ON;")
         c.execute("""
@@ -71,11 +71,21 @@ class Persistence:
         return groups
 
     def channel_add(self, title, url, description, group_id):
+        try:
+            c = self.con.cursor()
+            c.execute("""insert into Channel
+                (title,url,description,tsInsert,groupId)
+                values (?,?,?,datetime('now','localtime')
+                ,?)""", (title, url, description, group_id))
+            self.con.commit()
+        except sqlite3.IntegrityError as ex:
+            print(ex)
+
+    def channel_list_print(self):
         c = self.con.cursor()
-        c.execute("""insert into Channel
-            (title,url,description,tsInsert,groupId)
-            values (?,?,?,datetime('now','localtime')
-            ,?)""", (title, url, description, group_id))
+        c.execute("select * from Channel")
+        for row in c:
+            print(row)
 
     def channel_get_id(self, url):
         c = self.con.cursor()
@@ -90,6 +100,21 @@ class Persistence:
         c = self.con.cursor()
         c.execute("update Channel set groupId=? where id=?", (group_id, channel_id))
 
+    def channels_update(self):
+        c = self.con.cursor()
+        c.execute("select id,url from Channel ")
+        for row in c:
+            channel_id = int(row[0])
+            url = row[1]
+            r = Rss(url)
+            for post in r.channel[0].posts:
+                Persistence.post_add(self
+                                     , post.title, post.link
+                                     , post.postDate, post.creator
+                                     , post.description, post.content
+                                     , post.guid, channel_id)
+
+
     def post_add(self,title, link, postDate, creator, description, content, guid, channel_id):
         c = self.con.cursor()
         try:
@@ -98,6 +123,14 @@ class Persistence:
                    values (?,?,?,?,?,?,?,?)""", (title, link, postDate, creator, description, content, guid, channel_id))
         except sqlite3.IntegrityError:
             pass
+
+    def post_get_all(self):
+        c = self.con.cursor()
+        c.execute("select title, link, postDate, creator, description, content, guid from Post")
+        posts = [Post().from_args(
+            r[0], r[1], r[2], r[3], r[4], r[5], r[6]
+        ) for r in c]
+        return posts
 
 
 if __name__ == '__main__':
@@ -167,6 +200,12 @@ if __name__ == '__main__':
         print("\nChange Channel group")
         p.channel_change_group(1, 1)
 
+        print("Update all channels")
+        p.channels_update()
+
+        print("Get all posts")
+        posts = p.post_get_all()
+        print(posts)
 
         p.con.close()
 

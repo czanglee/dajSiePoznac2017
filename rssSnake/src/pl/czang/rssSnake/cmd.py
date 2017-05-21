@@ -1,15 +1,18 @@
 from optparse import OptionParser
 import webbrowser
 import sys
-
+from db import Persistence
+from rss import Rss
 
 class Cmd:
+    db_file = "rssSnake.db"
 
     def __init__(self):
 
         parser = OptionParser(description='rssSnake by czang.pl.')
         parser.add_option("-a", "--add"
                           , action="callback", callback=Cmd.channel_add
+                          , type="string", dest="url"
                           , help="add new channel")
         parser.add_option("-v", "--view"
                           , action="callback", callback=Cmd.custom_view
@@ -35,10 +38,13 @@ class Cmd:
 
     @classmethod
     def channel_add(cls, option, opt, value, parser):
-        print("Adding channel")
-        print(option)
-        print(opt)
-        print(value)
+        print("Adding channel: %s" % (value,))
+        p = Persistence(Cmd.db_file)
+        r = Rss(value)
+        ch = r.channel[0]
+        p.channel_add(ch.title, r.url, ch.description, 1)
+        print("Channels:")
+        p.channel_list_print()
 
     @classmethod
     def custom_view(cls, option, opt, value, parser):
@@ -56,6 +62,14 @@ class Cmd:
             except ValueError:
                 pass
         print("your choice is: %i" % (choice,))
+        p = Persistence(Cmd.db_file)
+        p.channels_update()
+
+        if choice == 1:
+            print("Printing all messages")
+            posts = p.post_get_all()
+            for p in posts:
+                print(p)
 
     @classmethod
     def search(cls, option, opt, value, parser):
